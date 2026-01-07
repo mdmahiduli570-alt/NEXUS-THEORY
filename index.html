@@ -178,13 +178,15 @@
                         let rawNum = Math.floor(1000000000 + Math.random() * 9000000000).toString();
                         savedUID = rawNum.slice(0,4) + "-" + rawNum.slice(4,8) + "-" + rawNum.slice(8,10);
                         localStorage.setItem('nexus_uid', savedUID);
-                        
-                        // New user initial balance
-                        if (savedUID !== "7629-4031-16") {
-                            localStorage.setItem('nexus_coins', 500);
-                            localStorage.setItem('nexus_diamonds', 50);
-                            localStorage.setItem('nexus_inventory', JSON.stringify([]));
-                        }
+                    }
+
+                    // Reset values immediately for new or non-admin users
+                    if (savedUID !== "7629-4031-16") {
+                        localStorage.setItem('nexus_coins', 500);
+                        localStorage.setItem('nexus_diamonds', 50);
+                        localStorage.setItem('nexus_lvl', 1);
+                        localStorage.setItem('nexus_xp', 0);
+                        localStorage.setItem('nexus_inventory', JSON.stringify([]));
                     }
 
                     localStorage.setItem('nexus_username', user.displayName);
@@ -206,9 +208,8 @@
             const isAdmin = (userUID === ADMIN_ID);
             let inv = JSON.parse(localStorage.getItem('nexus_inventory')) || [];
             
-            // ADMIN VS NORMAL LOGIC
             if (isAdmin) {
-                // Admin values stay maxed
+                // UI for Admin
                 document.getElementById('admin-tag').style.display = "block";
                 document.getElementById('admin-god-btn').style.display = "block";
                 document.getElementById('config-card').classList.add('admin-glow');
@@ -219,29 +220,37 @@
                 document.getElementById('lvl-display').innerText = "53";
                 document.getElementById('xp-bar').style.width = "100%";
             } else {
-                // Normal player values
+                // UI for Regular Players
                 document.getElementById('admin-tag').style.display = "none";
                 document.getElementById('admin-god-btn').style.display = "none";
                 document.getElementById('config-card').classList.remove('admin-glow');
                 document.getElementById('system-status').innerText = "System online...";
 
-                // Default balance if empty
-                if(localStorage.getItem('nexus_coins') === null) localStorage.setItem('nexus_coins', 500);
-                if(localStorage.getItem('nexus_diamonds') === null) localStorage.setItem('nexus_diamonds', 50);
-
-                const coins = parseInt(localStorage.getItem('nexus_coins')) || 500;
-                const diamonds = parseInt(localStorage.getItem('nexus_diamonds')) || 50;
+                // Security Check: If a guest has infinite or crazy money, reset it
+                let currentCoins = parseInt(localStorage.getItem('nexus_coins'));
+                if (isNaN(currentCoins) || currentCoins > 1000000) {
+                    localStorage.setItem('nexus_coins', 500);
+                    currentCoins = 500;
+                }
                 
-                document.getElementById('coin-count').innerText = coins.toLocaleString();
-                document.getElementById('diamond-count').innerText = diamonds.toLocaleString();
+                let currentDiamonds = parseInt(localStorage.getItem('nexus_diamonds'));
+                if (isNaN(currentDiamonds) || currentDiamonds > 1000000) {
+                    localStorage.setItem('nexus_diamonds', 50);
+                    currentDiamonds = 50;
+                }
+
+                document.getElementById('coin-count').innerText = currentCoins.toLocaleString();
+                document.getElementById('diamond-count').innerText = currentDiamonds.toLocaleString();
                 document.getElementById('lvl-display').innerText = localStorage.getItem('nexus_lvl') || 1;
-                document.getElementById('xp-bar').style.width = ((parseInt(localStorage.getItem('nexus_xp')) || 0) / 150 * 100) + "%";
+                
+                let xp = parseInt(localStorage.getItem('nexus_xp')) || 0;
+                document.getElementById('xp-bar').style.width = ((xp / 150) * 100) + "%";
             }
 
             document.getElementById('user-avatar').src = localStorage.getItem('nexus_avatar') || `https://api.dicebear.com/7.x/bottts/svg?seed=${userUID}`;
             document.getElementById('display-name').innerText = localStorage.getItem('nexus_username') || (isAdmin ? "NEXUS_CREATOR" : "GUEST");
 
-            // Badge Slot Logic
+            // Badge System
             const slot = document.getElementById('status-slot');
             const equipped = inv.find(i => i.type === 'badge' && i.equipped === true);
             
