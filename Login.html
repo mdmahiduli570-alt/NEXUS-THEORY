@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chess Pro | Login</title>
+    
+    <link rel="stylesheet" href="Login.css">
+
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+</head>
+<body>
+
+    <div class="login-card">
+        <div class="logo">♟️</div>
+        <h1>Welcome</h1>
+        <p>Sync your progress to the cloud</p>
+        
+        <button class="google-btn" onclick="loginWithGoogle()">
+            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18">
+            Continue with Google
+        </button>
+
+        <div id="status" class="status-msg">Ready to sign in</div>
+        
+        <a href="index.html" class="back-link">Return to Guest Mode</a>
+    </div>
+
+    <script>
+        // Your Firebase Config
+        const firebaseConfig = {
+            apiKey: "AIzaSyANDePeIlEMr8gnZ22-Zgfwv89MV1I-uLo",
+            authDomain: "chess-85573.firebaseapp.com",
+            projectId: "chess-85573",
+            storageBucket: "chess-85573.firebasestorage.app",
+            messagingSenderId: "1093336797570",
+            appId: "1:1093336797570:web:88adee69bcd3aeba777f9b"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const provider = new firebase.auth.GoogleAuthProvider();
+
+        // Handle the Redirect Result
+        auth.getRedirectResult().then((result) => {
+            if (result.user) {
+                let p = JSON.parse(localStorage.getItem('chess_pro_global')) || { coins: 1000, xp: 0 };
+                p.username = result.user.displayName;
+                localStorage.setItem('chess_pro_global', JSON.stringify(p));
+                window.location.href = "index.html";
+            }
+        });
+
+        function loginWithGoogle() {
+            auth.signInWithRedirect(provider);
+        }
+    </script>
+</body>
+</html>

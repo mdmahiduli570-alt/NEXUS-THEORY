@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexus | Premium Vault</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #00f2ff;
+            --secondary: #7000ff;
+            --gold: #ffcc00;
+            --diamond: #00d4ff;
+            --bg: #0a0b10;
+            --card-bg: rgba(255, 255, 255, 0.05);
+            --border: rgba(255, 255, 255, 0.1);
+            --rarity-epic: #ff00ff;
+            --rarity-legendary: #ff4d4d;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background: var(--bg);
+            color: white;
+            font-family: 'Segoe UI', sans-serif;
+            padding: 40px 20px;
+            background: radial-gradient(circle at top, #1a1b2e, #0a0b10);
+            min-height: 100vh;
+        }
+
+        .container { max-width: 1200px; margin: 0 auto; }
+
+        /* --- HEADER --- */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 20px;
+        }
+
+        .currency-wrap { display: flex; gap: 15px; }
+
+        .balance-display {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 10px 20px;
+            border-radius: 30px;
+            border: 1px solid var(--border);
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            backdrop-filter: blur(10px);
+        }
+
+        .balance-display.gold { border-color: var(--gold); color: var(--gold); background: rgba(255, 204, 0, 0.1); }
+        .balance-display.diamonds { border-color: var(--diamond); color: var(--diamond); background: rgba(0, 212, 255, 0.1); }
+
+        /* --- GRID --- */
+        .vault-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 25px;
+        }
+
+        .item-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 30px 20px;
+            text-align: center;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(5px);
+        }
+
+        .item-card:hover {
+            transform: translateY(-10px);
+            border-color: var(--diamond);
+            background: rgba(0, 212, 255, 0.03);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        .rarity-tag {
+            font-size: 0.6rem;
+            letter-spacing: 2px;
+            font-weight: 900;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }
+
+        .item-icon {
+            font-size: 3rem;
+            margin: 15px 0;
+            display: block;
+        }
+
+        .item-name { font-size: 1.1rem; margin-bottom: 8px; font-weight: 600; }
+        .item-price { 
+            color: var(--diamond); 
+            font-weight: bold; 
+            margin-bottom: 20px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            gap: 5px;
+        }
+
+        /* --- BUTTONS --- */
+        .buy-btn {
+            width: 100%;
+            padding: 12px;
+            border-radius: 12px;
+            border: none;
+            background: var(--diamond);
+            color: black;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+        }
+
+        .buy-btn:hover { 
+            background: white; 
+            box-shadow: 0 0 20px var(--diamond);
+        }
+
+        .buy-btn.owned {
+            background: rgba(255,255,255,0.05);
+            color: rgba(255,255,255,0.2);
+            cursor: not-allowed;
+            border: 1px solid var(--border);
+        }
+
+        /* --- DECORATION --- */
+        .owned-badge {
+            position: absolute;
+            top: 15px;
+            right: -35px;
+            background: var(--primary);
+            color: black;
+            padding: 5px 40px;
+            transform: rotate(45deg);
+            font-size: 0.65rem;
+            font-weight: 900;
+            display: none;
+        }
+
+        .item-card.is-owned .owned-badge { display: block; }
+        .item-card.is-owned { border-color: var(--primary); opacity: 0.7; }
+
+        a.back-link {
+            color: var(--primary);
+            text-decoration: none;
+            font-size: 0.8rem;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin-bottom: 5px;
+            transition: 0.3s;
+        }
+        a.back-link:hover { opacity: 0.7; }
+
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="header">
+            <div>
+                <a href="index.html" class="back-link"><i class="fas fa-arrow-left"></i> RETURN TO NEXUS</a>
+                <h1><i class="fas fa-gem" style="color: var(--diamond);"></i> PREMIUM <span style="color: var(--diamond);">MARKET</span></h1>
+            </div>
+            <div class="currency-wrap">
+                <div class="balance-display gold">
+                    <i class="fas fa-coins"></i> <span id="user-coins">0</span>
+                </div>
+                <div class="balance-display diamonds">
+                    <i class="fas fa-gem"></i> <span id="user-diamonds">0</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="vault-grid">
+            <div class="item-card" id="item-neon-blade">
+                <div class="owned-badge">OWNED</div>
+                <div class="rarity-tag" style="color: var(--diamond);">Elite</div>
+                <i class="fas fa-bolt item-icon" style="color: var(--diamond);"></i>
+                <h3 class="item-name">Neon Blade</h3>
+                <span class="item-price"><i class="fas fa-gem"></i> 50</span>
+                <button class="buy-btn" onclick="purchaseWithDiamonds('Neon Blade', 50, 'item-neon-blade')">Purchase</button>
+            </div>
+
+            <div class="item-card" id="item-shadow-step">
+                <div class="owned-badge">OWNED</div>
+                <div class="rarity-tag" style="color: #888;">Stealth</div>
+                <i class="fas fa-shoe-prints item-icon" style="color: #444;"></i>
+                <h3 class="item-name">Shadow Step</h3>
+                <span class="item-price"><i class="fas fa-gem"></i> 80</span>
+                <button class="buy-btn" onclick="purchaseWithDiamonds('Shadow Step', 80, 'item-shadow-step')">Purchase</button>
+            </div>
+
+            <div class="item-card" id="item-cyber-wings">
+                <div class="owned-badge">OWNED</div>
+                <div class="rarity-tag" style="color: var(--rarity-epic);">Epic</div>
+                <i class="fas fa-dove item-icon" style="color: var(--rarity-epic);"></i>
+                <h3 class="item-name">Cyber Wings</h3>
+                <span class="item-price"><i class="fas fa-gem"></i> 150</span>
+                <button class="buy-btn" onclick="purchaseWithDiamonds('Cyber Wings', 150, 'item-cyber-wings')">Purchase</button>
+            </div>
+
+            <div class="item-card" id="item-void-pioneer">
+                <div class="owned-badge">OWNED</div>
+                <div class="rarity-tag" style="color: var(--primary);">Title</div>
+                <i class="fas fa-user-astronaut item-icon" style="color: var(--primary);"></i>
+                <h3 class="item-name">"Void Pioneer"</h3>
+                <span class="item-price"><i class="fas fa-gem"></i> 200</span>
+                <button class="buy-btn" onclick="purchaseWithDiamonds('Void Pioneer', 200, 'item-void-pioneer')">Purchase</button>
+            </div>
+
+            <div class="item-card" id="item-nebula-chat">
+                <div class="owned-badge">OWNED</div>
+                <div class="rarity-tag" style="color: #a100ff;">VFX</div>
+                <i class="fas fa-comment-dots item-icon" style="color: #a100ff;"></i>
+                <h3 class="item-name">Nebula Chat</h3>
+                <span class="item-price"><i class="fas fa-gem"></i> 400</span>
+                <button class="buy-btn" onclick="purchaseWithDiamonds('Nebula Chat', 400, 'item-nebula-chat')">Purchase</button>
+            </div>
+
+            <div class="item-card" id="item-dragon-spirit">
+                <div class="owned-badge">OWNED</div>
+                <div class="rarity-tag" style="color: var(--rarity-legendary);">Legendary</div>
+                <i class="fas fa-dragon item-icon" style="color: var(--rarity-legendary);"></i>
+                <h3 class="item-name">Dragon Spirit</h3>
+                <span class="item-price"><i class="fas fa-gem"></i> 750</span>
+                <button class="buy-btn" onclick="purchaseWithDiamonds('Dragon Spirit', 750, 'item-dragon-spirit')">Purchase</button>
+            </div>
+
+            <div class="item-card" id="item-admin-aura">
+                <div class="owned-badge">OWNED</div>
+                <div class="rarity-tag" style="color: var(--gold);">Mythic</div>
+                <i class="fas fa-dharmachakra item-icon" style="color: var(--gold);"></i>
+                <h3 class="item-name">Grandmaster Aura</h3>
+                <span class="item-price"><i class="fas fa-gem"></i> 1,200</span>
+                <button class="buy-btn" onclick="purchaseWithDiamonds('Grandmaster Aura', 1200, 'item-admin-aura')">Purchase</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Inventory and Item List
+        const PREMIUM_ITEMS = [
+            { name: 'Neon Blade', id: 'item-neon-blade' },
+            { name: 'Shadow Step', id: 'item-shadow-step' },
+            { name: 'Cyber Wings', id: 'item-cyber-wings' },
+            { name: 'Void Pioneer', id: 'item-void-pioneer' },
+            { name: 'Nebula Chat', id: 'item-nebula-chat' },
+            { name: 'Dragon Spirit', id: 'item-dragon-spirit' },
+            { name: 'Grandmaster Aura', id: 'item-admin-aura' }
+        ];
+
+        function refreshUI() {
+            // Update Coin Display
+            const coins = parseInt(localStorage.getItem('nexus_coins')) || 0;
+            document.getElementById('user-coins').innerText = coins.toLocaleString();
+
+            // Update Diamond Display
+            const diamonds = parseInt(localStorage.getItem('nexus_diamonds')) || 0;
+            document.getElementById('user-diamonds').innerText = diamonds.toLocaleString();
+
+            // Check Inventory for Ownership
+            const inventory = JSON.parse(localStorage.getItem('nexus_inventory')) || [];
+            
+            PREMIUM_ITEMS.forEach(item => {
+                const isOwned = inventory.some(invItem => invItem.name === item.name);
+                const card = document.getElementById(item.id);
+                
+                if (card && isOwned) {
+                    const btn = card.querySelector('.buy-btn');
+                    card.classList.add('is-owned');
+                    btn.innerText = "ALREADY OWNED";
+                    btn.classList.add('owned');
+                    btn.disabled = true;
+                }
+            });
+        }
+
+        function purchaseWithDiamonds(name, price, cardId) {
+            let diamonds = parseInt(localStorage.getItem('nexus_diamonds')) || 0;
+            let inventory = JSON.parse(localStorage.getItem('nexus_inventory')) || [];
+
+            if (diamonds < price) {
+                alert("ACCESS DENIED: Insufficient Diamond Balance.");
+                return;
+            }
+
+            // Deduct Currency
+            diamonds -= price;
+            localStorage.setItem('nexus_diamonds', diamonds);
+
+            // Add to Global Inventory
+            inventory.push({ 
+                type: 'premium_item', 
+                name: name, 
+                currency: 'diamonds',
+                timestamp: new Date().toISOString()
+            });
+            localStorage.setItem('nexus_inventory', JSON.stringify(inventory));
+
+            // Success Feedback
+            alert(`TRANSACTION SUCCESSFUL: ${name} added to Armory.`);
+            refreshUI();
+        }
+
+        // Run on Page Load
+        window.onload = refreshUI;
+    </script>
+</body>
+</html>

@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chess Pro | Online PvP</title>
+    
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+
+    <style>
+        :root {
+            --gold: #d4af37;
+            --gold-bright: #f9d976;
+            --obsidian: #0a0a0a;
+            --obsidian-panel: #141414;
+            --gold-glow: rgba(212, 175, 55, 0.3);
+        }
+
+        body {
+            margin: 0; min-height: 100vh; color: #e5e5e5;
+            font-family: 'Cinzel', serif;
+            background: radial-gradient(circle at center, #1a1a1a 0%, var(--obsidian) 100%);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+        }
+
+        .pvp-container {
+            width: 90%; max-width: 500px;
+            background: var(--obsidian-panel);
+            border-radius: 24px; padding: 40px;
+            text-align: center; border: 1px solid #222;
+            position: relative; box-shadow: 0 20px 50px rgba(0,0,0,1);
+        }
+
+        /* Gold Border Effect */
+        .pvp-container::after {
+            content: ""; position: absolute; inset: 0;
+            border-radius: 24px; padding: 2px;
+            background: linear-gradient(135deg, var(--gold), transparent, var(--gold-bright));
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+        }
+
+        .radar {
+            width: 150px; height: 150px; margin: 0 auto 30px;
+            border: 2px solid var(--gold); border-radius: 50%;
+            position: relative; overflow: hidden;
+            background: repeating-radial-gradient(circle, transparent 0, transparent 20px, rgba(212,175,55,0.1) 21px);
+        }
+
+        .radar-sweep {
+            position: absolute; width: 100%; height: 100%;
+            background: conic-gradient(from 0deg, var(--gold-glow), transparent 90deg);
+            animation: sweep 2s linear infinite;
+            transform-origin: center;
+        }
+
+        @keyframes sweep { 100% { transform: rotate(360deg); } }
+
+        .status-text { font-size: 1.2rem; letter-spacing: 3px; color: var(--gold); margin: 20px 0; }
+        
+        .player-info { display: flex; justify-content: space-around; align-items: center; margin-top: 30px; }
+        .p-box { width: 80px; text-align: center; }
+        .p-avatar { width: 60px; height: 60px; border-radius: 50%; border: 1px solid var(--gold); margin-bottom: 10px; }
+
+        .btn-cancel {
+            margin-top: 40px; background: transparent; border: 1px solid #444;
+            color: #888; padding: 10px 30px; border-radius: 5px; cursor: pointer;
+            text-transform: uppercase; transition: 0.3s;
+        }
+        .btn-cancel:hover { border-color: #ff4d4d; color: #ff4d4d; }
+
+        .vs-circle { font-size: 1.5rem; color: var(--gold); font-weight: 900; font-style: italic; }
+    </style>
+</head>
+<body>
+
+    <div class="pvp-container">
+        <h1 style="letter-spacing: 5px; margin-bottom: 10px;">MATCHMAKING</h1>
+        <p style="font-size: 0.7rem; color: #666; margin-bottom: 30px;">SEARCHING FOR EXECUTIVE OPPONENT</p>
+
+        <div class="radar">
+            <div class="radar-sweep"></div>
+        </div>
+
+        <div class="status-text" id="status">INITIALIZING...</div>
+
+        <div class="player-info">
+            <div class="p-box">
+                <img id="my-avatar" class="p-avatar" src="https://api.dicebear.com/7.x/bottts/svg?seed=me">
+                <div style="font-size: 0.6rem;" id="my-name">YOU</div>
+            </div>
+            
+            <div class="vs-circle">VS</div>
+
+            <div class="p-box">
+                <div id="opp-avatar" class="p-avatar" style="background: #111; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">?</div>
+                <div style="font-size: 0.6rem;" id="opp-name">SEARCHING</div>
+            </div>
+        </div>
+
+        <button class="btn-cancel" onclick="cancelSearch()">Cancel Search</button>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyANDePeIlEMr8gnZ22-Zgfwv89MV1I-uLo",
+            authDomain: "chess-85573.firebaseapp.com",
+            projectId: "chess-85573",
+            storageBucket: "chess-85573.firebasestorage.app",
+            messagingSenderId: "1093336797570",
+            appId: "1:1093336797570:web:88adee69bcd3aeba777f9b",
+            databaseURL: "https://chess-85573-default-rtdb.firebaseio.com/"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.database();
+        let lobbyRef = null;
+
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                db.ref('users/' + user.uid).once('value', s => {
+                    const data = s.val();
+                    document.getElementById('my-name').innerText = data.name.toUpperCase();
+                    if(data.img) document.getElementById('my-avatar').src = data.img;
+                    findMatch(user.uid, data.name);
+                });
+            } else {
+                window.location.href = 'Login.html';
+            }
+        });
+
+        function findMatch(uid, name) {
+            const status = document.getElementById('status');
+            status.innerText = "FINDING OPPONENT...";
+
+            // Matchmaking logic: Join "Global Lobby"
+            lobbyRef = db.ref('lobby').push({
+                uid: uid,
+                name: name,
+                timestamp: firebase.database.ServerValue.TIMESTAMP
+            });
+
+            // Listen for other players
+            db.ref('lobby').limitToLast(2).on('value', snap => {
+                const players = snap.val();
+                if (players && Object.keys(players).length >= 2) {
+                    const keys = Object.keys(players);
+                    const opponent = players[keys[0]].uid === uid ? players[keys[1]] : players[keys[0]];
+                    
+                    // Match Found UI
+                    status.innerText = "MATCH FOUND!";
+                    status.style.color = "#4CAF50";
+                    document.getElementById('opp-name').innerText = opponent.name.toUpperCase();
+                    document.getElementById('opp-avatar').innerText = "♟️";
+                    
+                    // Redirect to Game after 2 seconds
+                    setTimeout(() => {
+                        window.location.href = `Game.html?room=${keys[0]}_${keys[1]}`;
+                    }, 2000);
+                }
+            });
+
+            // Cleanup on disconnect
+            lobbyRef.onDisconnect().remove();
+        }
+
+        function cancelSearch() {
+            if(lobbyRef) lobbyRef.remove();
+            window.location.href = 'index.html';
+        }
+    </script>
+</body>
+</html>

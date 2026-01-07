@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexus | Achievement Vault</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #00f2ff;
+            --legendary: #ffcc00;
+            --bg: #0a0b10;
+        }
+
+        body { 
+            background: var(--bg); 
+            color: white; 
+            font-family: 'Segoe UI', sans-serif; 
+            padding: 40px; 
+            text-align: center;
+            background: radial-gradient(circle at center, #1a1b2e 0%, #0a0b10 100%);
+            min-height: 100vh;
+        }
+
+        .header-section { margin-bottom: 50px; }
+        
+        h1 { font-size: 2.5rem; letter-spacing: 2px; margin-bottom: 10px; }
+        .subtitle { color: #888; font-size: 0.9rem; }
+
+        .badge-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
+            gap: 25px; 
+            max-width: 1200px;
+            margin: 30px auto; 
+        }
+
+        .badge-card { 
+            background: rgba(255, 255, 255, 0.03); 
+            padding: 30px 20px; 
+            border-radius: 20px; 
+            border: 1px solid rgba(255, 255, 255, 0.1); 
+            opacity: 0.2; 
+            filter: grayscale(1); 
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Unlocked State */
+        .unlocked { 
+            opacity: 1; 
+            filter: grayscale(0); 
+            border-color: var(--primary); 
+            background: rgba(0, 242, 255, 0.05);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        /* Legendary Glow for Admin/High Tiers */
+        .legendary-card.unlocked {
+            border-color: var(--legendary);
+            background: rgba(255, 204, 0, 0.05);
+            box-shadow: 0 0 20px rgba(255, 204, 0, 0.2);
+            animation: pulse-border 2s infinite;
+        }
+
+        .badge-icon { font-size: 3.5rem; margin-bottom: 15px; display: block; }
+        
+        .badge-info h3 { margin-bottom: 8px; font-size: 1.1rem; }
+        .badge-info p { font-size: 0.75rem; color: #666; line-height: 1.4; }
+        .unlocked .badge-info p { color: #aaa; }
+
+        @keyframes pulse-border {
+            0% { border-color: #ffcc00; }
+            50% { border-color: #fff500; box-shadow: 0 0 30px rgba(255, 204, 0, 0.4); }
+            100% { border-color: #ffcc00; }
+        }
+
+        .back-btn {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: bold;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            letter-spacing: 1px;
+            border: 1px solid var(--primary);
+            padding: 8px 20px;
+            border-radius: 5px;
+            transition: 0.3s;
+        }
+
+        .back-btn:hover { background: var(--primary); color: black; }
+    </style>
+</head>
+<body>
+
+    <div class="header-section">
+        <a href="index.html" class="back-btn"><i class="fas fa-arrow-left"></i> Command Center</a>
+        <h1>ACHIEVEMENT VAULT</h1>
+        <p class="subtitle">Syncing with Nexus Mainframe...</p>
+    </div>
+
+    <div class="badge-grid" id="badge-display"></div>
+
+    <script>
+        const ADMIN_ID = "8829-1029-44"; // Your Specific Admin UID
+
+        const possibleBadges = [
+            { name: "First Contact", desc: "Successfully linked account to Nexus.", icon: "fa-plug", color: "#00f2ff", type: "common" },
+            { name: "Rich Operative", desc: "Accumulate over 100,000 Nexus Coins.", icon: "fa-money-bill-wave", color: "#00ff88", type: "rare" },
+            { name: "Elite Veteran", desc: "Reach the maximum level of 53.", icon: "fa-medal", color: "#ffcc00", type: "rare" },
+            { name: "Ghost Paradox", desc: "Win 50 matches without taking damage.", icon: "fa-user-secret", color: "#9d00ff", type: "legendary" },
+            { name: "Void Walker", desc: "Traverse the dark sector 1,000 times.", icon: "fa-eye", color: "#ff0055", type: "legendary" },
+            { name: "Nexus God", desc: "System Administrator privileges detected.", icon: "fa-atom", color: "#ffffff", type: "god" }
+        ];
+
+        function load() {
+            // Check if current user is Admin via UID (assuming UID is stored or checked)
+            // For this page, we'll check the default UID in the index if not stored.
+            const userUID = "8829-1029-44"; // This would normally come from your profile logic
+            const isAdmin = userUID === ADMIN_ID;
+
+            const inv = JSON.parse(localStorage.getItem('nexus_inventory')) || [];
+            const display = document.getElementById('badge-display');
+            
+            display.innerHTML = ''; // Clear display
+
+            possibleBadges.forEach(b => {
+                // If you are admin, isOwned is ALWAYS true. Otherwise, check inventory.
+                const isOwned = isAdmin || inv.some(item => item.name === b.name);
+                
+                const cardClass = b.type === 'legendary' || b.type === 'god' ? 'legendary-card' : '';
+                
+                display.innerHTML += `
+                    <div class="badge-card ${isOwned ? 'unlocked' : ''} ${cardClass}">
+                        <i class="fas ${b.icon} badge-icon" style="color:${isOwned ? b.color : '#333'}"></i>
+                        <div class="badge-info">
+                            <h3>${isOwned ? b.name : 'Locked'}</h3>
+                            <p>${b.desc}</p>
+                        </div>
+                    </div>
+                `;
+            });
+
+            if(isAdmin) {
+                document.querySelector('.subtitle').innerText = "ACCESS GRANTED: All protocols unlocked, Creator.";
+                document.querySelector('.subtitle').style.color = "var(--legendary)";
+            }
+        }
+
+        window.onload = load;
+    </script>
+    <script>
+    // In your Badges.html script, make sure when you save to inventory, you use this structure:
+    function unlockBadge(badge) {
+        let inv = JSON.parse(localStorage.getItem('nexus_inventory')) || [];
+        if (!inv.some(i => i.name === badge.name)) {
+            inv.push({
+                name: badge.name,
+                icon: badge.icon,
+                color: badge.color,
+                type: 'badge',
+                equipped: false
+            });
+            localStorage.setItem('nexus_inventory', JSON.stringify(inv));
+        }
+    }
+</script>
+</body>
+</html>

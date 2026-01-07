@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Chess Pro | Local PvP</title>
+    <style>
+        :root {
+            --bg: #0f172a; --panel: #1e293b; --accent: #38bdf8;
+            --white-sq: #f1f5f9; --black-sq: #64748b;
+        }
+        * { box-sizing: border-box; touch-action: manipulation; }
+        body { 
+            background: var(--bg); color: white; font-family: 'Segoe UI', system-ui, sans-serif; 
+            display: flex; flex-direction: column; align-items: center; 
+            justify-content: center; min-height: 100vh; margin: 0; padding: 10px;
+        }
+        
+        .game-info { 
+            background: var(--panel); padding: 12px 25px; border-radius: 12px; 
+            margin-bottom: 20px; border: 1px solid #334155; display: flex; 
+            gap: 15px; align-items: center; box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+        }
+        
+        .turn-indicator {
+            width: 14px; height: 14px; border-radius: 50%;
+            transition: 0.3s;
+        }
+        .turn-white { background: #fff; box-shadow: 0 0 12px #fff; }
+        .turn-black { background: #000; box-shadow: 0 0 12px var(--accent); border: 1px solid var(--accent); }
+
+        #board {
+            display: grid; 
+            /* Responsive board size */
+            grid-template-columns: repeat(8, min(11vw, 60px)); 
+            grid-template-rows: repeat(8, min(11vw, 60px));
+            border: 5px solid #1e293b; border-radius: 4px; user-select: none;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            background: #1e293b;
+        }
+        
+        .sq { 
+            width: 100%; height: 100%; 
+            display: flex; justify-content: center; align-items: center; 
+            font-size: min(8vw, 40px); cursor: pointer; position: relative; 
+        }
+        .white { background: var(--white-sq); color: #334155; }
+        .black { background: var(--black-sq); color: #f1f5f9; }
+        
+        .selected { background: #7dd3fc !important; }
+        .hint-dot { 
+            width: 30%; height: 30%; 
+            background: rgba(56, 189, 248, 0.6); 
+            border-radius: 50%; position: absolute; pointer-events: none; 
+        }
+        
+        .btn-row { margin-top: 25px; display: flex; gap: 10px; }
+        .btn { 
+            padding: 12px 20px; border-radius: 8px; border: none; 
+            font-weight: bold; cursor: pointer; text-decoration: none; 
+            background: #334155; color: white; transition: 0.2s; 
+        }
+        .btn-home { background: var(--accent); color: #0f172a; }
+        .btn:active { transform: scale(0.95); }
+    </style>
+</head>
+<body>
+
+    <div class="game-info">
+        <div id="turn-dot" class="turn-indicator turn-white"></div>
+        <div id="turn-status">White's Move</div>
+    </div>
+
+    <div id="board"></div>
+
+    <div class="btn-row">
+        <a href="index.html" class="btn btn-home">Back to Hub</a>
+        <button class="btn" onclick="resetGame()">Reset Board</button>
+    </div>
+
+    <script>
+        const ICONS = { r:'♜', n:'♞', b:'♝', q:'♛', k:'♚', p:'♟', R:'♖', N:'♘', B:'♗', Q:'♕', K:'♔', P:'♙' };
+        let board = [];
+        let turn = 'W';
+        let selected = null;
+        let isGameOver = false;
+
+        function resetGame() {
+            board = [
+                ['r','n','b','q','k','b','n','r'],
+                ['p','p','p','p','p','p','p','p'],
+                ['','','','','','','',''],['','','','','','','',''],
+                ['','','','','','','',''],['','','','','','','',''],
+                ['P','P','P','P','P','P','P','P'],
+                ['R','N','B','Q','K','B','N','R']
+            ];
+            turn = 'W';
+            selected = null;
+            isGameOver = false;
+            updateUI();
+            render();
+        }
+
+        function render() {
+            const boardEl = document.getElementById('board');
+            boardEl.innerHTML = '';
+            let hints = (selected) ? getLegalMoves(selected.r, selected.c) : [];
+
+            for(let r=0; r<8; r++) {
+                for(let c=0; c<8; c++) {
+                    const sq = document.createElement('div');
+                    sq.className = `sq ${(r+c)%2===0 ? 'white' : 'black'}`;
+                    if(selected?.r === r && selected?.c === c) sq.classList.add('selected');
+                    
+                    if(board[r][c]) {
+                        const piece = document.createElement('span');
+                        piece.innerText = ICONS[board[r][c]];
+                        sq.appendChild(piece);
+                    }
+
+                    if(hints.some(h => h.r === r && h.c === c)) {
+                        const dot = document.createElement('div');
+                        dot.className = 'hint-dot';
+                        sq.appendChild(dot);
+                    }
+
+                    sq.onclick = () => handleInput(r, c);
+                    boardEl.appendChild(sq);
+                }
+            }
+        }
+
+        function handleInput(r, c) {
+            if(isGameOver) return;
+            const piece = board[r][c];
+            const isFriendly = piece && (turn === 'W' ? piece === piece.toUpperCase() : piece === piece.toLowerCase());
+
+            if (selected) {
+                if (validateMove(selected.r, selected.c, r, c)) {
+                    executeMove(selected.r, selected.c, r, c);
+                    selected = null;
+                } else if (isFriendly) {
+                    selected = {r, c}; // Switch selection to another friendly piece
+                } else {
+                    selected = null; // Deselect on invalid move
+                }
+            } else if (isFriendly) {
+                selected = {r, c};
+            }
+            render();
+        }
+
+        function executeMove(r1, c1, r2, c2) {
+            const captured = board[r2][c2];
+            if(captured && captured.toLowerCase() === 'k') {
+                isGameOver = true;
+                setTimeout(() => { alert(turn === 'W' ? "White Wins!" : "Black Wins!"); resetGame(); }, 50);
+            }
+
+            board[r2][c2] = board[r1][c1];
+            board[r1][c1] = '';
+            turn = (turn === 'W' ? 'B' : 'W');
+            updateUI();
+        }
+
+        function updateUI() {
+            document.getElementById('turn-status').innerText = turn === 'W' ? "White's Move" : "Black's Move";
+            document.getElementById('turn-dot').className = `turn-indicator ${turn === 'W' ? 'turn-white' : 'turn-black'}`;
+        }
+
+        function validateMove(r1, c1, r2, c2) {
+            const p = board[r1][c1];
+            const target = board[r2][c2];
+            if(r1 === r2 && c1 === c2) return false;
+            
+            // Cannot capture own piece
+            if(target && (target === target.toUpperCase()) === (p === p.toUpperCase())) return false;
+
+            const dr = r2-r1, dc = c2-c1;
+            const adr = Math.abs(dr), adc = Math.abs(dc);
+            const type = p.toLowerCase();
+
+            // Path Blocking Check (for slider pieces)
+            if(['r','b','q'].includes(type)) {
+                if(type === 'r' && dr !== 0 && dc !== 0) return false;
+                if(type === 'b' && adr !== adc) return false;
+                if(type === 'q' && (dr !== 0 && dc !== 0 && adr !== adc)) return false;
+
+                let sr = Math.sign(dr), sc = Math.sign(dc);
+                let currR = r1 + sr, currC = c1 + sc;
+                while(currR !== r2 || currC !== c2) {
+                    if(board[currR][currC] !== '') return false;
+                    currR += sr; currC += sc;
+                }
+            }
+
+            switch(type) {
+                case 'p':
+                    const dir = (p === 'P') ? -1 : 1;
+                    if(dc === 0 && target === '' && dr === dir) return true;
+                    if(dc === 0 && target === '' && dr === 2*dir && r1 === (p === 'P' ? 6 : 1) && board[r1+dir][c1] === '') return true;
+                    if(adc === 1 && dr === dir && target !== '') return true;
+                    return false;
+                case 'n': return (adr === 2 && adc === 1) || (adr === 1 && adc === 2);
+                case 'r': return true; // Path already checked
+                case 'b': return true; // Path already checked
+                case 'q': return true; // Path already checked
+                case 'k': return adr <= 1 && adc <= 1;
+            }
+            return false;
+        }
+
+        function getLegalMoves(r, c) {
+            let moves = [];
+            for(let tr=0; tr<8; tr++) {
+                for(let tc=0; tc<8; tc++) {
+                    if(validateMove(r, c, tr, tc)) moves.push({r: tr, c: tc});
+                }
+            }
+            return moves;
+        }
+
+        resetGame();
+    </script>
+</body>
+</html>

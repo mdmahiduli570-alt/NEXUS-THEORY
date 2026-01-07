@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexus | Mission Log</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #00f2ff;
+            --secondary: #7000ff;
+            --bg: #0a0b10;
+            --card-bg: rgba(255, 255, 255, 0.05);
+            --border: rgba(255, 255, 255, 0.1);
+            --success: #00ff88;
+        }
+
+        body {
+            background: var(--bg);
+            color: white;
+            font-family: 'Segoe UI', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: radial-gradient(circle at center, #1a1b2e, #0a0b10);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 20px;
+        }
+
+        .back-btn {
+            color: var(--primary);
+            text-decoration: none;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .task-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .task-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            padding: 20px;
+            border-radius: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: 0.3s;
+        }
+
+        .task-card:hover {
+            border-color: var(--secondary);
+            background: rgba(112, 0, 255, 0.05);
+        }
+
+        .task-info h3 {
+            margin-bottom: 5px;
+            color: var(--primary);
+        }
+
+        .task-info p {
+            font-size: 0.85rem;
+            color: #aaa;
+        }
+
+        .reward-tag {
+            font-size: 0.8rem;
+            color: var(--success);
+            margin-top: 5px;
+            display: block;
+        }
+
+        .claim-btn {
+            background: var(--secondary);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+
+        .claim-btn:disabled {
+            background: #333;
+            color: #777;
+            cursor: not-allowed;
+        }
+
+        .claim-btn.completed {
+            background: transparent;
+            border: 1px solid var(--success);
+            color: var(--success);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="header">
+            <div>
+                <a href="index.html" class="back-btn"><i class="fas fa-arrow-left"></i> RETURN TO COMMAND</a>
+                <h1 style="margin-top:10px;">Mission <span style="color: var(--secondary);">Log</span></h1>
+            </div>
+            <div id="stat-sync" style="text-align: right; font-size: 0.8rem; color: #888;">
+                <p>Syncing Status...</p>
+            </div>
+        </div>
+
+        <div class="task-list">
+            <div class="task-card">
+                <div class="task-info">
+                    <h3>Daily Check-in</h3>
+                    <p>Access the Nexus Protocol today.</p>
+                    <span class="reward-tag">+500 Coins | +20 XP</span>
+                </div>
+                <button class="claim-btn" onclick="completeTask(this, 500, 20, 'daily')">CLAIM</button>
+            </div>
+
+            <div class="task-card">
+                <div class="task-info">
+                    <h3>Combat Trainee</h3>
+                    <p>Play 1 match against the AI.</p>
+                    <span class="reward-tag">+1,200 Coins | +50 XP</span>
+                </div>
+                <button class="claim-btn" onclick="completeTask(this, 1200, 50, 'trainee')">CLAIM</button>
+            </div>
+
+            <div class="task-card">
+                <div class="task-info">
+                    <h3>Wealth Accumulator</h3>
+                    <p>Reach a balance of 60,000 coins.</p>
+                    <span class="reward-tag">+5,000 Coins | +100 XP</span>
+                </div>
+                <button id="rich-task" class="claim-btn" onclick="completeTask(this, 5000, 100, 'wealth')">CLAIM</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function updateSyncDisplay() {
+            const coins = localStorage.getItem('nexus_coins') || 50000;
+            const lvl = localStorage.getItem('nexus_lvl') || 1;
+            document.getElementById('stat-sync').innerHTML = `
+                <p><i class="fas fa-coins" style="color:gold"></i> ${parseInt(coins).toLocaleString()}</p>
+                <p><i class="fas fa-star" style="color:var(--primary)"></i> LVL ${lvl}</p>
+            `;
+        }
+
+        function completeTask(btn, coinReward, xpReward, taskId) {
+            // Check if already claimed
+            if (localStorage.getItem('task_' + taskId)) return;
+
+            // Update Coins
+            let currentCoins = parseInt(localStorage.getItem('nexus_coins')) || 50000;
+            localStorage.setItem('nexus_coins', currentCoins + coinReward);
+
+            // Update XP
+            let currentXP = parseInt(localStorage.getItem('nexus_xp')) || 0;
+            let currentLvl = parseInt(localStorage.getItem('nexus_lvl')) || 1;
+            let newXP = currentXP + xpReward;
+
+            // Simple level up logic (if XP > 150)
+            if (newXP >= 150) {
+                newXP = newXP - 150;
+                localStorage.setItem('nexus_lvl', currentLvl + 1);
+            }
+            localStorage.setItem('nexus_xp', newXP);
+
+            // Mark as claimed
+            localStorage.setItem('task_' + taskId, 'true');
+            
+            // Update Button UI
+            btn.innerHTML = '<i class="fas fa-check"></i> CLAIMED';
+            btn.disabled = true;
+            btn.classList.add('completed');
+
+            alert(`Mission Complete! \nReceived: ${coinReward} Coins & ${xpReward} XP`);
+            updateSyncDisplay();
+        }
+
+        // Initialize Page
+        window.onload = () => {
+            updateSyncDisplay();
+            
+            // Restore claimed status for buttons
+            const tasks = ['daily', 'trainee', 'wealth'];
+            tasks.forEach(id => {
+                if (localStorage.getItem('task_' + id)) {
+                    const buttons = document.querySelectorAll('.claim-btn');
+                    buttons.forEach(b => {
+                        if (b.getAttribute('onclick').includes(`'${id}'`)) {
+                            b.innerHTML = '<i class="fas fa-check"></i> CLAIMED';
+                            b.disabled = true;
+                            b.classList.add('completed');
+                        }
+                    });
+                }
+            });
+
+            // Special Check: Wealth Accumulator
+            let currentCoins = parseInt(localStorage.getItem('nexus_coins')) || 50000;
+            if (currentCoins < 60000 && !localStorage.getItem('task_wealth')) {
+                const wealthBtn = document.getElementById('rich-task');
+                wealthBtn.disabled = true;
+                wealthBtn.innerText = "LOCKED";
+            }
+        };
+    </script>
+</body>
+</html>

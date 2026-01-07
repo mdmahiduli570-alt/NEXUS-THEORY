@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexus Profile | Account Settings</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #00f2ff;
+            --secondary: #7000ff;
+            --bg: #0a0b10;
+            --card-bg: rgba(255, 255, 255, 0.05);
+            --border: rgba(255, 255, 255, 0.1);
+        }
+
+        body {
+            background: var(--bg);
+            color: white;
+            font-family: 'Segoe UI', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: radial-gradient(circle at bottom left, #1a1b2e, #0a0b10);
+        }
+
+        .container {
+            width: 90%;
+            max-width: 600px;
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            border-radius: 30px;
+            padding: 40px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .back-btn {
+            color: white;
+            text-decoration: none;
+            font-size: 1.2rem;
+            transition: 0.3s;
+        }
+
+        .back-btn:hover { color: var(--primary); }
+
+        /* --- PHOTO UPLOAD --- */
+        .photo-edit-container {
+            position: relative;
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 30px;
+        }
+
+        .current-avatar {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            border: 3px solid var(--primary);
+            object-fit: cover;
+        }
+
+        .upload-overlay {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            background: var(--secondary);
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border: 2px solid var(--bg);
+        }
+
+        #file-input { display: none; }
+
+        /* --- FORM STYLING --- */
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-size: 0.8rem;
+            color: #888;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        input {
+            width: 100%;
+            background: rgba(0,0,0,0.3);
+            border: 1px solid var(--border);
+            padding: 12px 15px;
+            border-radius: 10px;
+            color: white;
+            font-size: 1rem;
+            outline: none;
+            transition: 0.3s;
+        }
+
+        input:focus { border-color: var(--primary); }
+
+        .btn-save {
+            width: 100%;
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+            border: none;
+            padding: 15px;
+            border-radius: 12px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: 0.3s;
+        }
+
+        .btn-save:hover {
+            transform: scale(1.02);
+            box-shadow: 0 0 20px rgba(0, 242, 255, 0.4);
+        }
+
+        .merge-section {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border);
+            text-align: center;
+        }
+
+        .merge-tag {
+            font-size: 0.75rem;
+            color: #aaa;
+            margin-bottom: 15px;
+            display: block;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="header">
+            <a href="index.html" class="back-btn"><i class="fas fa-arrow-left"></i></a>
+            <h2>Account Profile</h2>
+        </div>
+
+        <div class="photo-edit-container">
+            <img src="https://i.pravatar.cc/150?u=8829" id="profile-preview" class="current-avatar">
+            <label for="file-input" class="upload-overlay">
+                <i class="fas fa-camera"></i>
+            </label>
+            <input type="file" id="file-input" accept="image/*" onchange="previewImage(event)">
+        </div>
+
+        <div class="input-group">
+            <label>Display Name</label>
+            <input type="text" id="username-input" value="Admin_Nexus">
+        </div>
+
+        <div class="input-group">
+            <label>Unique ID (UID)</label>
+            <input type="text" id="uid-input" value="8829-1029-44" readonly style="color: #666; cursor: not-allowed;">
+            <small style="color: #555; font-size: 0.7rem;">UID is permanent for Admin accounts.</small>
+        </div>
+
+        <button class="btn-save" onclick="saveProfile()">UPDATE PROFILE</button>
+
+        <div class="merge-section">
+            <span class="merge-tag">Link External Accounts</span>
+            <div style="display: flex; gap: 15px; justify-content: center;">
+                <i class="fab fa-google" style="font-size: 1.5rem; cursor: pointer; color: #db4437;"></i>
+                <i class="fab fa-discord" style="font-size: 1.5rem; cursor: pointer; color: #5865F2;"></i>
+                <i class="fab fa-steam" style="font-size: 1.5rem; cursor: pointer; color: #ffffff;"></i>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Preview selected image
+        function previewImage(event) {
+            const reader = new FileReader();
+            reader.onload = function() {
+                const output = document.getElementById('profile-preview');
+                output.src = reader.result;
+                // In a real app, you would upload 'reader.result' to your server here
+            }
+            reader.readAsDataURL(event.target.files[0]);
+        }
+
+        // Save logic
+        function saveProfile() {
+            const newName = document.getElementById('username-input').value;
+            
+            // Simulating save to LocalStorage so it reflects on index.html
+            localStorage.setItem('nexus_username', newName);
+            localStorage.setItem('nexus_avatar', document.getElementById('profile-preview').src);
+            
+            alert("Success: Profile updated locally!");
+            window.location.href = "index.html";
+        }
+
+        // Load existing data if any
+        window.onload = function() {
+            const savedName = localStorage.getItem('nexus_username');
+            const savedAvatar = localStorage.getItem('nexus_avatar');
+            if(savedName) document.getElementById('username-input').value = savedName;
+            if(savedAvatar) document.getElementById('profile-preview').src = savedAvatar;
+        }
+    </script>
+</body>
+</html>

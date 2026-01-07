@@ -1,0 +1,96 @@
+/* --- Master RGB Aesthetic Theme --- */
+:root {
+    --bg-dark: #020617;
+    --accent-blue: #38bdf8;
+    --accent-purple: #a855f7;
+    --accent-pink: #ec4899;
+    --glass-bg: rgba(15, 23, 42, 0.7);
+    --glass-border: rgba(255, 255, 255, 0.1);
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow-x: hidden;
+    
+    /* Animated RGB Gradient Background */
+    background: linear-gradient(-45deg, #0f172a, #1e1b4b, #2e1065, #1e1b4b);
+    background-size: 400% 400%;
+    animation: gradientBG 15s ease infinite;
+}
+
+/* Background Animation */
+@keyframes gradientBG {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+/* Aesthetic Light Glows (Ambient Lighting) */
+body::before, body::after {
+    content: "";
+    position: fixed;
+    width: 300px;
+    height: 300px;
+    border-radius: 50%;
+    filter: blur(100px);
+    z-index: -1;
+    opacity: 0.5;
+    animation: floatGlow 10s infinite alternate;
+}
+
+body::before {
+    top: 10%;
+    left: 10%;
+    background: var(--accent-blue);
+}
+
+body::after {
+    bottom: 10%;
+    right: 10%;
+    background: var(--accent-purple);
+    animation-delay: -5s;
+}
+
+@keyframes floatGlow {
+    from { transform: translate(0, 0); }
+    to { transform: translate(100px, 50px); }
+}
+
+/* Glassmorphism Containers */
+.hub-container, .config-card, .game-info, .profile-card {
+    background: var(--glass-bg) !important;
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border: 1px solid var(--glass-border) !important;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8) !important;
+}
+
+/* RGB Glowing Piece/Button Highlights */
+.selected, .menu-btn:hover {
+    box-shadow: 0 0 15px var(--accent-blue);
+    border-color: var(--accent-blue) !important;
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+    width: 8px;
+}
+::-webkit-scrollbar-track {
+    background: var(--bg-dark);
+}
+::-webkit-scrollbar-thumb {
+    background: linear-gradient(var(--accent-blue), var(--accent-purple));
+    border-radius: 10px;
+}
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box; /* The "Anti-Glitch" setting */
+}

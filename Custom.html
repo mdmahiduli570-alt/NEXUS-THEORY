@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Chess Pro | Custom Match</title>
+    <style>
+        :root {
+            --bg: #0f172a;
+            --card: #1e293b;
+            --accent: #38bdf8;
+            --glass: rgba(255, 255, 255, 0.05);
+            --error: #ef4444;
+        }
+
+        /* FIX 1: Prevent scrolling glitches and center properly */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%);
+            color: white;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px; /* Buffer for mobile */
+        }
+
+        .config-card {
+            background: var(--card);
+            width: 100%;
+            max-width: 400px;
+            padding: 30px;
+            border-radius: 24px;
+            border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+            text-align: center;
+        }
+
+        h2 { margin-bottom: 25px; letter-spacing: 2px; color: var(--accent); font-size: 1.5rem; }
+
+        .setting-group { text-align: left; margin-bottom: 20px; }
+
+        label {
+            display: block;
+            font-size: 0.75rem;
+            color: #94a3b8;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        select, input {
+            width: 100%;
+            background: rgba(0,0,0,0.3);
+            border: 1px solid #334155;
+            padding: 14px;
+            border-radius: 12px;
+            color: white;
+            font-size: 1rem;
+            outline: none;
+            transition: 0.3s;
+            -webkit-appearance: none; /* Fixes iOS styling glitches */
+        }
+
+        select:focus, input:focus { border-color: var(--accent); background: rgba(0,0,0,0.5); }
+
+        .balance-info {
+            font-size: 0.8rem;
+            color: #64748b;
+            margin-top: 5px;
+            display: block;
+        }
+
+        .btn-stack {
+            margin-top: 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .btn {
+            padding: 16px;
+            border-radius: 14px;
+            border: none;
+            font-weight: 800;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            font-size: 1rem;
+            display: block;
+            text-align: center;
+        }
+
+        .btn-play { background: var(--accent); color: #0f172a; }
+        .btn-play:hover { transform: translateY(-2px); filter: brightness(1.1); }
+        .btn-play:active { transform: translateY(0); }
+
+        .btn-back { background: transparent; border: 1px solid #334155; color: #94a3b8; }
+        
+        /* Error message style */
+        #error-msg {
+            color: var(--error);
+            font-size: 0.8rem;
+            margin-top: 10px;
+            display: none;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="config-card">
+        <h2>MATCH SETUP</h2>
+
+        <div class="setting-group">
+            <label>Entry Bet (🪙)</label>
+            <input type="number" id="bet-amount" value="500" step="100" min="0">
+            <span class="balance-info">Your Balance: <span id="current-coins">0</span> 🪙</span>
+        </div>
+
+        <div class="setting-group">
+            <label>Board Theme</label>
+            <select id="board-theme">
+                <option value="classic">Classic Blue</option>
+                <option value="wood">Grandmaster Wood</option>
+                <option value="neon">Neon Night</option>
+            </select>
+        </div>
+
+        <div class="setting-group">
+            <label>Match Type</label>
+            <select id="opponent-type">
+                <option value="AI">vs Computer (Local)</option>
+                <option value="PVP">vs Friend (Local)</option>
+            </select>
+        </div>
+
+        <p id="error-msg">Insufficient coins!</p>
+
+        <div class="btn-stack">
+            <button class="btn btn-play" onclick="startCustomMatch()">START GAME</button>
+            <a href="index.html" class="btn btn-back">CANCEL</a>
+        </div>
+    </div>
+
+    <script>
+        // FIX 2: Load real balance from LocalStorage on page start
+        window.onload = function() {
+            const userData = JSON.parse(localStorage.getItem('chess_pro_global')) || { coins: 0 };
+            document.getElementById('current-coins').innerText = userData.coins.toLocaleString();
+        };
+
+        function startCustomMatch() {
+            const betInput = document.getElementById('bet-amount');
+            const errorMsg = document.getElementById('error-msg');
+            
+            const bet = parseInt(betInput.value);
+            const theme = document.getElementById('board-theme').value;
+            const type = document.getElementById('opponent-type').value;
+
+            // FIX 3: Validation logic (Prevent starting with negative or impossible bets)
+            const userData = JSON.parse(localStorage.getItem('chess_pro_global')) || { coins: 0 };
+
+            if (isNaN(bet) || bet < 0) {
+                errorMsg.innerText = "Please enter a valid bet!";
+                errorMsg.style.display = "block";
+                return;
+            }
+
+            if (bet > userData.coins) {
+                errorMsg.innerText = "You don't have enough coins!";
+                errorMsg.style.display = "block";
+                betInput.style.borderColor = "var(--error)";
+                return;
+            }
+
+            // Success - Proceed
+            errorMsg.style.display = "none";
+            
+            const config = {
+                bet: bet,
+                theme: theme,
+                type: type,
+                timestamp: Date.now() // Helpful for cache-busting
+            };
+            
+            localStorage.setItem('custom_match_config', JSON.stringify(config));
+
+            // FIX 4: Explicit Path handling
+            const targetPage = (type === 'AI') ? 'PlaywithAI.html' : 'game.html';
+            window.location.href = targetPage;
+        }
+    </script>
+</body>
+</html>

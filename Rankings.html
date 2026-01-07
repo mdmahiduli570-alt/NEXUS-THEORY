@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chess Pro | Global Rankings</title>
+    
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+
+    <style>
+        :root {
+            --gold: #d4af37;
+            --gold-bright: #f9d976;
+            --obsidian: #0a0a0a;
+            --obsidian-panel: #141414;
+            --premium-gradient: linear-gradient(135deg, #1a1a1a 0%, #000000 100%);
+        }
+
+        body {
+            margin: 0; min-height: 100vh; color: #e5e5e5;
+            font-family: 'Cinzel', serif;
+            background: radial-gradient(circle at center, #1a1a1a 0%, var(--obsidian) 100%);
+            display: flex; flex-direction: column; align-items: center; padding: 40px 20px;
+        }
+
+        .leaderboard-container {
+            width: 100%; max-width: 800px;
+            background: var(--obsidian-panel);
+            border-radius: 24px;
+            border: 1px solid #222;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,1);
+            position: relative;
+        }
+
+        /* Gold Border Glow */
+        .leaderboard-container::before {
+            content: ""; position: absolute; inset: -1px;
+            border-radius: 24px; padding: 2px;
+            background: linear-gradient(135deg, var(--gold), transparent, var(--gold-bright));
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+        }
+
+        h1 {
+            text-align: center; font-size: 2.5rem; letter-spacing: 5px;
+            background: linear-gradient(180deg, #f9d976 0%, #d4af37 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            margin-bottom: 40px;
+        }
+
+        .ranking-table { width: 100%; border-collapse: collapse; }
+        
+        .ranking-row {
+            background: rgba(255,255,255,0.02);
+            border-bottom: 1px solid #1a1a1a;
+            transition: 0.3s;
+        }
+
+        .ranking-row:hover { background: rgba(212, 175, 55, 0.05); }
+
+        .ranking-row td { padding: 20px; text-align: left; }
+
+        .rank-number { font-weight: 900; font-size: 1.2rem; width: 50px; }
+        .top-1 { color: #ffcc00; text-shadow: 0 0 10px rgba(255,204,0,0.5); }
+        .top-2 { color: #c0c0c0; }
+        .top-3 { color: #cd7f32; }
+
+        .user-cell { display: flex; align-items: center; gap: 15px; }
+        .user-img { width: 45px; height: 45px; border-radius: 50%; border: 1px solid var(--gold); }
+        .user-name { font-weight: bold; letter-spacing: 1px; }
+
+        .xp-cell { text-align: right !important; color: var(--gold); font-family: monospace; font-weight: bold; }
+
+        .btn-back {
+            margin-top: 30px; background: transparent; color: var(--gold);
+            border: 1px solid var(--gold); padding: 10px 25px; border-radius: 5px;
+            cursor: pointer; text-transform: uppercase; font-family: 'Cinzel';
+            transition: 0.3s;
+        }
+        .btn-back:hover { background: var(--gold); color: black; }
+
+        #loading-text { text-align: center; color: var(--gold); letter-spacing: 2px; }
+    </style>
+</head>
+<body>
+
+    <div class="leaderboard-container">
+        <h1>GLOBAL RANKS</h1>
+        
+        <div id="loading-text">RETRIVING ELITE DATA...</div>
+        
+        <table class="ranking-table" id="ranking-table" style="display: none;">
+            <tbody id="ranking-body">
+                </tbody>
+        </table>
+
+        <div style="text-align: center;">
+            <button class="btn-back" onclick="window.location.href='index.html'">Return to Hub</button>
+        </div>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyANDePeIlEMr8gnZ22-Zgfwv89MV1I-uLo",
+            authDomain: "chess-85573.firebaseapp.com",
+            projectId: "chess-85573",
+            storageBucket: "chess-85573.firebasestorage.app",
+            messagingSenderId: "1093336797570",
+            appId: "1:1093336797570:web:88adee69bcd3aeba777f9b",
+            databaseURL: "https://chess-85573-default-rtdb.firebaseio.com/"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        function loadRankings() {
+            // Fetch users sorted by XP, limit to top 10
+            db.ref('users').orderByChild('xp').limitToLast(10).on('value', snapshot => {
+                const list = [];
+                snapshot.forEach(child => {
+                    list.push(child.val());
+                });
+
+                // Reverse because limitToLast gives ascending order
+                list.reverse();
+
+                renderTable(list);
+            });
+        }
+
+        function renderTable(users) {
+            const body = document.getElementById('ranking-body');
+            body.innerHTML = "";
+
+            users.forEach((user, index) => {
+                const rank = index + 1;
+                const rankClass = rank <= 3 ? `top-${rank}` : "";
+                const avatar = user.img || "https://api.dicebear.com/7.x/bottts/svg?seed=" + user.uid;
+
+                const row = `
+                    <tr class="ranking-row">
+                        <td class="rank-number ${rankClass}">#${rank}</td>
+                        <td class="user-cell">
+                            <img src="${avatar}" class="user-img">
+                            <div>
+                                <div class="user-name">${user.name || "Unknown"}</div>
+                                <div style="font-size: 0.6rem; color: #555;">LVL ${Math.floor((user.xp || 0) / 500) + 1}</div>
+                            </div>
+                        </td>
+                        <td class="xp-cell">${(user.xp || 0).toLocaleString()} XP</td>
+                    </tr>
+                `;
+                body.innerHTML += row;
+            });
+
+            document.getElementById('loading-text').style.display = 'none';
+            document.getElementById('ranking-table').style.display = 'table';
+        }
+
+        // Initialize
+        loadRankings();
+    </script>
+</body>
+</html>

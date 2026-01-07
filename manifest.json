@@ -1,0 +1,16 @@
+{
+  "name": "Nexus Theory",
+  "short_name": "Nexus",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#0a0b10",
+  "theme_color": "#00f2ff",
+  "description": "Absolute Command Dashboard",
+  "icons": [
+    {
+      "src": "https://i.pravatar.cc/512",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
