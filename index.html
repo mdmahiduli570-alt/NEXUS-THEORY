@@ -64,10 +64,7 @@
         .action-card:hover { transform: translateY(-8px); border-color: var(--primary); }
         .action-card i { font-size: 2.5rem; color: var(--primary); margin-bottom: 15px; display: block; }
         
-        /* Notification Badge for Mail */
-        .notification-dot { position: absolute; top: 15px; right: 15px; background: var(--admin-red); color: white; font-size: 0.7rem; padding: 4px 8px; border-radius: 50%; font-weight: bold; display: none; }
-        
-        .config-btn.admin-glow { border-color: var(--admin-gold); box-shadow: 0 0 10px rgba(255, 204, 0, 0.2); }
+        .mail-badge { position: absolute; top: 15px; right: 15px; background: var(--admin-red); color: white; font-size: 0.7rem; padding: 2px 7px; border-radius: 50%; font-weight: bold; display: none; }
     </style>
 </head>
 <body>
@@ -87,7 +84,7 @@
             <button id="login-btn" class="login-btn"><i class="fab fa-google"></i> SYNC CORE</button>
             <button id="admin-god-btn" onclick="triggerGodMode()" style="display:none; width:100%; margin-top:15px; background:linear-gradient(45deg, #ff0055, #7000ff); border:none; color:white; padding:10px; border-radius:8px; cursor:pointer; font-weight:bold;">GOD MODE</button>
             
-            <button id="admin-gift-btn" onclick="openGiftPanel()" style="display:none; width:100%; margin-top:10px; background:linear-gradient(45deg, #ffcc00, #ff8800); border:none; color:black; padding:10px; border-radius:8px; cursor:pointer; font-weight:bold;"><i class="fas fa-gift"></i> GIFT CREATOR</button>
+            <button id="admin-gift-btn" onclick="openGiftPanel()" style="display:none; width:100%; margin-top:10px; background:linear-gradient(45deg, #ffcc00, #ff8800); border:none; color:black; padding:10px; border-radius:8px; cursor:pointer; font-weight:bold;">GIFT CREATOR</button>
         </div>
 
         <div class="stat-card">
@@ -124,7 +121,7 @@
             <a href="Task.html" class="action-card"><i class="fas fa-terminal"></i><h3>Mission Log</h3></a>
             
             <a href="Mail.html" class="action-card">
-                <div id="mail-notif" class="notification-dot">0</div>
+                <div id="mail-count-badge" class="mail-badge">0</div>
                 <i class="fas fa-envelope"></i>
                 <h3>Neural Mail</h3>
             </a>
@@ -202,17 +199,6 @@
             let diamonds = parseInt(localStorage.getItem('nexus_diamonds')) || 50;
             let inv = JSON.parse(localStorage.getItem('nexus_inventory')) || [];
 
-            // Mail Notification Logic
-            const mail = JSON.parse(localStorage.getItem('nexus_mail')) || [];
-            const unread = mail.filter(m => !m.read).length;
-            const notif = document.getElementById('mail-notif');
-            if(unread > 0) {
-                notif.style.display = "block";
-                notif.innerText = unread;
-            } else {
-                notif.style.display = "none";
-            }
-
             const rank = getRankInfo(xp);
             const rankBadge = document.getElementById('rank-name');
             rankBadge.innerText = rank.name;
@@ -239,9 +225,15 @@
                 document.getElementById('xp-text').innerText = `${xp} / 3000 XP`;
             }
 
+            // Mail Notif Sync
+            const globalMail = JSON.parse(localStorage.getItem('nexus_global_mail')) || [];
+            const unread = globalMail.filter(m => m.targetUID === userUID && !m.read).length;
+            const badge = document.getElementById('mail-count-badge');
+            if(unread > 0) { badge.style.display = "block"; badge.innerText = unread; }
+            else { badge.style.display = "none"; }
+
             const slot = document.getElementById('status-slot');
             const equippedBadge = inv.find(i => i.type === 'badge' && i.equipped === true);
-            
             slot.style.display = "flex";
             if (equippedBadge) {
                 slot.style.background = equippedBadge.color;
@@ -252,24 +244,44 @@
             }
         }
 
-        // Admin functionality to send "Gifts" or Messages to Mail.html
         function openGiftPanel() {
             if(localStorage.getItem('nexus_uid') !== ADMIN_ID) return;
+            const input = prompt("Format: UID | Message | Reward (C-amount or D-amount)\nExample: 1234-5678-90 | System Reward | C-500");
             
-            const msg = prompt("Enter the message/gift details to send to all users:");
-            if(msg) {
-                const currentMail = JSON.parse(localStorage.getItem('nexus_mail')) || [];
+            if(input) {
+                const parts = input.split('|').map(p => p.trim());
+                if(parts.length < 2) { alert("Invalid format!"); return; }
+
+                const targetUID = parts[0];
+                const msgBody = parts[1];
+                const rewardRaw = parts[2] || "";
+
+                let rType = null;
+                let rAmt = 0;
+
+                if(rewardRaw.toUpperCase().startsWith('C-')) {
+                    rType = 'coins'; rAmt = parseInt(rewardRaw.substring(2));
+                } else if(rewardRaw.toUpperCase().startsWith('D-')) {
+                    rType = 'diamonds'; rAmt = parseInt(rewardRaw.substring(2));
+                }
+
                 const newMail = {
                     id: Date.now(),
+                    targetUID: targetUID,
                     sender: "SYSTEM OVERLORD",
-                    subject: "Nexus Gift / Announcement",
-                    body: msg,
-                    time: new Date().toLocaleString(),
-                    read: false
+                    subject: rType ? "REWARD DEPOT" : "SYSTEM ADVISORY",
+                    body: msgBody,
+                    rewardType: rType,
+                    rewardAmount: rAmt,
+                    claimed: false,
+                    read: false,
+                    time: new Date().toLocaleString()
                 };
-                currentMail.unshift(newMail);
-                localStorage.setItem('nexus_mail', JSON.stringify(currentMail));
-                alert("Message broadcasted to Neural Mail!");
+
+                const globalMail = JSON.parse(localStorage.getItem('nexus_global_mail')) || [];
+                globalMail.unshift(newMail);
+                localStorage.setItem('nexus_global_mail', JSON.stringify(globalMail));
+                alert("Gift dispatched to terminal: " + targetUID);
                 refreshAll();
             }
         }
