@@ -5,6 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Nexus | Absolute Command</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <div class="season-container">
+        <h1 class="season-title">SEASON-1</h1>
+        <div class="season-glow"></div>
+    </div>
+
     <style>
         :root {
             --primary: #00f2ff;
@@ -15,112 +21,91 @@
             --bg: #0a0b10;
             --card-bg: rgba(255, 255, 255, 0.05);
             --border: rgba(255, 255, 255, 0.1);
+            /* Rank Colors */
+            --bronze: #cd7f32; --silver: #e0e0e0; --gold: #ffcc00; --elite: #00f2ff;
         }
+
+        .season-container { position: relative; text-align: center; padding: 20px; margin: 20px 0; }
+        .season-title {
+            font-size: 3.5rem; font-weight: 900; color: #fff; text-transform: uppercase; letter-spacing: 8px;
+            text-shadow: 0 0 10px rgba(0, 242, 255, 0.8);
+            background: linear-gradient(to bottom, #fff 40%, #00f2ff 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            animation: textPulse 3s infinite ease-in-out;
+        }
+        .season-glow { position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); width: 150px; height: 4px; background: var(--primary); border-radius: 10px; box-shadow: 0 0 20px var(--primary); }
+
+        @keyframes textPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
 
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
-        body { 
-            background: var(--bg); 
-            color: white; 
-            background: radial-gradient(circle at top right, #1a1b2e, #0a0b10); 
-            min-height: 100vh;
-            overflow-x: hidden;
-        }
+        body { background: var(--bg); color: white; background: radial-gradient(circle at top right, #1a1b2e, #0a0b10); min-height: 100vh; overflow-x: hidden; }
 
         /* --- SIDEBAR --- */
-        .sidebar {
-            position: fixed; width: 280px; height: 100vh; background: rgba(0, 0, 0, 0.8);
-            backdrop-filter: blur(20px); border-right: 1px solid var(--border); padding: 20px;
-            display: flex; flex-direction: column; z-index: 100;
-        }
-
+        .sidebar { position: fixed; width: 280px; height: 100vh; background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(20px); border-right: 1px solid var(--border); padding: 20px; display: flex; flex-direction: column; z-index: 100; }
         .profile-section { text-align: center; padding-bottom: 20px; border-bottom: 1px solid var(--border); margin-bottom: 20px; }
-        #badge-row { display: flex; justify-content: center; gap: 8px; margin-bottom: 15px; min-height: 25px; flex-wrap: wrap; }
+        
+        .rank-badge { font-size: 0.65rem; font-weight: 800; padding: 2px 8px; border-radius: 4px; text-transform: uppercase; border: 1px solid; margin-top: 5px; display: inline-block; }
 
-        .admin-tag {
-            background: linear-gradient(45deg, var(--admin-red), var(--admin-gold));
-            color: white; font-size: 0.6rem; padding: 4px 12px; border-radius: 4px;
-            font-weight: 900; display: none; margin: 0 auto 12px;
-            box-shadow: 0 0 15px rgba(255, 0, 85, 0.5); animation: pulse 2s infinite; width: fit-content;
-        }
-
+        .admin-tag { background: linear-gradient(45deg, var(--admin-red), var(--admin-gold)); color: white; font-size: 0.6rem; padding: 4px 12px; border-radius: 4px; font-weight: 900; display: none; margin: 0 auto 12px; width: fit-content; }
         .profile-pic-container { position: relative; width: 115px; height: 115px; margin: 0 auto 15px; }
         .profile-pic { width: 115px; height: 115px; border-radius: 50%; border: 3px solid var(--primary); object-fit: cover; background: #000; padding: 4px; }
-        
-        .status-slot {
-            position: absolute; bottom: 5px; right: 5px;
-            width: 32px; height: 32px; border-radius: 50%;
-            display: none; align-items: center; justify-content: center;
-            font-size: 0.9rem; border: 3px solid var(--bg); transition: 0.5s; z-index: 2;
-        }
+        .status-slot { position: absolute; bottom: 5px; right: 5px; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 3px solid var(--bg); z-index: 2; }
 
-        .login-btn {
-            width: 100%; margin-top: 10px; background: rgba(255,255,255,0.1); border: 1px solid var(--primary);
-            color: white; padding: 8px; border-radius: 8px; cursor: pointer; font-size: 0.8rem;
-            transition: 0.3s; display: flex; align-items: center; justify-content: center; gap: 8px;
-        }
-        .login-btn:hover { background: var(--primary); color: black; }
-
+        .login-btn { width: 100%; margin-top: 10px; background: rgba(255,255,255,0.1); border: 1px solid var(--primary); color: white; padding: 8px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
         .stat-card { background: var(--card-bg); padding: 15px; border-radius: 15px; margin-bottom: 12px; border: 1px solid var(--border); }
         .bar-bg { width: 100%; height: 8px; background: #111; border-radius: 10px; margin-top: 10px; overflow: hidden; }
-        .bar-fill { height: 100%; background: linear-gradient(90deg, var(--primary), var(--secondary)); width: 0%; transition: 1.5s cubic-bezier(0.1, 0, 0.1, 1); }
-        
-        .owned-link { 
-            display: flex; align-items: center; justify-content: center; gap: 10px; 
-            background: linear-gradient(45deg, #1a1b2e, #0a0b10); padding: 15px; 
-            border-radius: 12px; border: 1px solid var(--primary); color: var(--primary); 
-            text-decoration: none; margin-top: auto; font-weight: bold; transition: 0.3s;
-        }
+        .bar-fill { height: 100%; background: linear-gradient(90deg, var(--primary), var(--secondary)); width: 0%; transition: 1.5s; }
+        .owned-link { display: flex; align-items: center; justify-content: center; gap: 10px; background: linear-gradient(45deg, #1a1b2e, #0a0b10); padding: 15px; border-radius: 12px; border: 1px solid var(--primary); color: var(--primary); text-decoration: none; margin-top: auto; font-weight: bold; }
 
         /* --- CONTENT GRID --- */
         .main-content { margin-left: 280px; padding: 60px; }
         .grid-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; }
+        .action-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 24px; padding: 35px 15px; text-decoration: none; color: white; text-align: center; transition: 0.4s; position: relative; }
+        .action-card:hover { transform: translateY(-8px); border-color: var(--primary); }
+        .action-card i { font-size: 2.5rem; color: var(--primary); margin-bottom: 15px; display: block; }
         
-        .action-card { 
-            background: var(--card-bg); border: 1px solid var(--border); border-radius: 24px; padding: 35px 15px; 
-            text-decoration: none; color: white; text-align: center; transition: 0.4s; position: relative; overflow: hidden;
-            cursor: pointer;
-        }
-        .action-card:hover { transform: translateY(-8px); border-color: var(--primary); background: rgba(0, 242, 255, 0.03); }
-        .action-card i { font-size: 2.5rem; color: var(--primary); margin-bottom: 15px; display: block; filter: drop-shadow(0 0 8px var(--primary)); }
+        /* Notification Badge for Mail */
+        .notification-dot { position: absolute; top: 15px; right: 15px; background: var(--admin-red); color: white; font-size: 0.7rem; padding: 4px 8px; border-radius: 50%; font-weight: bold; display: none; }
         
         .config-btn.admin-glow { border-color: var(--admin-gold); box-shadow: 0 0 10px rgba(255, 204, 0, 0.2); }
-
-        @keyframes pulse { 0%, 100% { opacity: 0.7; } 50% { opacity: 1; transform: scale(1.02); } }
     </style>
 </head>
 <body>
 
     <aside class="sidebar">
         <div class="profile-section">
-            <div id="badge-row"></div>
+            <div id="badge-row" style="display:flex; justify-content:center; gap:5px; margin-bottom:10px;"></div>
             <div id="admin-tag" class="admin-tag">SYSTEM OVERLORD</div>
             <div class="profile-pic-container">
                 <img src="" alt="Avatar" class="profile-pic" id="user-avatar">
                 <div id="status-slot" class="status-slot"></div>
             </div>
             <h2 id="display-name">...</h2>
-            <span class="uid-tag">UID: <b id="uid-num">0000-0000-00</b></span>
+            <div id="rank-name" class="rank-badge">BRONZE</div><br>
+            <span style="font-size:0.7rem; opacity:0.5;">UID: <b id="uid-num">0000-0000-00</b></span>
             
             <button id="login-btn" class="login-btn"><i class="fab fa-google"></i> SYNC CORE</button>
-            <button id="admin-god-btn" onclick="triggerGodMode()" style="display:none; width:100%; margin-top:15px; background:linear-gradient(45deg, #ff0055, #7000ff); border:none; color:white; padding:10px; border-radius:8px; cursor:pointer; font-weight:bold; font-size:0.7rem;">GOD MODE</button>
+            <button id="admin-god-btn" onclick="triggerGodMode()" style="display:none; width:100%; margin-top:15px; background:linear-gradient(45deg, #ff0055, #7000ff); border:none; color:white; padding:10px; border-radius:8px; cursor:pointer; font-weight:bold;">GOD MODE</button>
+            
+            <button id="admin-gift-btn" onclick="openGiftPanel()" style="display:none; width:100%; margin-top:10px; background:linear-gradient(45deg, #ffcc00, #ff8800); border:none; color:black; padding:10px; border-radius:8px; cursor:pointer; font-weight:bold;"><i class="fas fa-gift"></i> GIFT CREATOR</button>
         </div>
 
         <div class="stat-card">
             <div style="display:flex; justify-content: space-between; font-size: 0.75rem;">
                 <span style="color:var(--primary)">LVL <b id="lvl-display">0</b></span>
-                <span style="opacity: 0.4;">MAX 53</span>
+                <span id="xp-text" style="opacity: 0.4;">0 / 3000 XP</span>
             </div>
             <div class="bar-bg"><div id="xp-bar" class="bar-fill"></div></div>
         </div>
 
         <div class="stat-card" style="display:flex; justify-content:space-between;">
             <span><i class="fas fa-coins" style="color: gold;"></i> COINS</span>
-            <span id="coin-count" style="font-weight: bold;">0</span>
+            <span id="coin-count">0</span>
         </div>
 
-        <div class="stat-card" style="display:flex; justify-content:space-between; border-color: var(--diamond);">
+        <div class="stat-card" style="display:flex; justify-content:space-between;">
             <span><i class="fas fa-gem" style="color: var(--diamond);"></i> DIAMONDS</span>
-            <span id="diamond-count" style="font-weight: bold;">0</span>
+            <span id="diamond-count">0</span>
         </div>
 
         <a href="OwnedItem.html" class="owned-link"><i class="fas fa-box-open"></i> ARMORY</a>
@@ -134,18 +119,19 @@
 
         <div class="grid-container">
             <a href="PvP.html" class="action-card"><i class="fas fa-fire"></i><h3>Quick Match</h3></a>
-            <a href="Custom.html" class="action-card" style="border-color: var(--secondary);">
-                <i class="fas fa-tools" style="color: var(--secondary);"></i>
-                <h3>Custom Match</h3>
-            </a>
+            <a href="Custom.html" class="action-card" style="border-color: var(--secondary);"><i class="fas fa-tools" style="color: var(--secondary);"></i><h3>Custom Match</h3></a>
             <a href="PlaywithAI.html" class="action-card"><i class="fas fa-robot"></i><h3>Neural Combat</h3></a>
             <a href="Task.html" class="action-card"><i class="fas fa-terminal"></i><h3>Mission Log</h3></a>
+            
+            <a href="Mail.html" class="action-card">
+                <div id="mail-notif" class="notification-dot">0</div>
+                <i class="fas fa-envelope"></i>
+                <h3>Neural Mail</h3>
+            </a>
+
             <a href="Badges.html" class="action-card"><i class="fas fa-award"></i><h3>The Vault</h3></a>
             <a href="PREMIUM.html" class="action-card"><i class="fas fa-crown" style="color: gold;"></i><h3>Premium</h3></a>
-            <a href="Settings.html" class="action-card config-btn" id="config-card">
-                <i class="fas fa-cog"></i>
-                <h3>Core Config</h3>
-            </a>
+            <a href="Settings.html" class="action-card config-btn" id="config-card"><i class="fas fa-cog"></i><h3>Core Config</h3></a>
             <a href="Rankings.html" class="action-card"><i class="fas fa-chart-line"></i><h3>Global Stats</h3></a>
         </div>
     </main>
@@ -153,6 +139,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.20.0/firebase-app.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/9.20.0/firebase-auth.js";
+        import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/9.20.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyANDePeIlEMr8gnZ22-Zgfwv89MV1I-uLo",
@@ -160,117 +147,131 @@
             projectId: "chess-85573",
             storageBucket: "chess-85573.firebasestorage.app",
             messagingSenderId: "1093336797570",
-            appId: "1:1093336797570:web:88adee69bcd3aeba777f9b",
-            measurementId: "G-SRS4QJKDJ7"
+            appId: "1:1093336797570:web:88adee69bcd3aeba777f9b"
         };
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
+        const db = getFirestore(app);
         const provider = new GoogleAuthProvider();
 
-        document.getElementById('login-btn').addEventListener('click', () => {
-            signInWithPopup(auth, provider)
-                .then((result) => {
-                    const user = result.user;
-                    
-                    let savedUID = localStorage.getItem('nexus_uid');
-                    if (!savedUID) {
-                        let rawNum = Math.floor(1000000000 + Math.random() * 9000000000).toString();
-                        savedUID = rawNum.slice(0,4) + "-" + rawNum.slice(4,8) + "-" + rawNum.slice(8,10);
-                        localStorage.setItem('nexus_uid', savedUID);
-                    }
+        document.getElementById('login-btn').addEventListener('click', async () => {
+            try {
+                const result = await signInWithPopup(auth, provider);
+                const user = result.user;
+                
+                let savedUID = localStorage.getItem('nexus_uid');
+                if (!savedUID) {
+                    let rawNum = Math.floor(1000000000 + Math.random() * 9000000000).toString();
+                    savedUID = rawNum.slice(0,4) + "-" + rawNum.slice(4,8) + "-" + rawNum.slice(8,10);
+                    localStorage.setItem('nexus_uid', savedUID);
+                }
 
-                    // Reset values immediately for new or non-admin users
-                    if (savedUID !== "7629-4031-16") {
-                        localStorage.setItem('nexus_coins', 500);
-                        localStorage.setItem('nexus_diamonds', 50);
-                        localStorage.setItem('nexus_lvl', 1);
-                        localStorage.setItem('nexus_xp', 0);
-                        localStorage.setItem('nexus_inventory', JSON.stringify([]));
-                    }
+                await setDoc(doc(db, "users", savedUID), {
+                    username: user.displayName,
+                    avatar: user.photoURL,
+                    xp: parseInt(localStorage.getItem('nexus_xp')) || 0,
+                    lvl: parseInt(localStorage.getItem('nexus_lvl')) || 1,
+                    uid: savedUID
+                }, { merge: true });
 
-                    localStorage.setItem('nexus_username', user.displayName);
-                    localStorage.setItem('nexus_avatar', user.photoURL);
-                    refreshAll();
-                }).catch((error) => {
-                    console.error("Auth Error:", error);
-                });
+                localStorage.setItem('nexus_username', user.displayName);
+                localStorage.setItem('nexus_avatar', user.photoURL);
+                refreshAll();
+            } catch (error) { console.error("Auth Error:", error); }
         });
     </script>
 
     <script>
         const ADMIN_ID = "7629-4031-16";
 
+        function getRankInfo(xp) {
+            if (xp >= 3000) return { name: "NEXUS ELITE", color: "#00f2ff", icon: "fa-crown" };
+            if (xp >= 1500) return { name: "GOLD", color: "#ffcc00", icon: "fa-trophy" };
+            if (xp >= 500) return { name: "SILVER", color: "#e0e0e0", icon: "fa-award" };
+            return { name: "BRONZE", color: "#cd7f32", icon: "fa-medal" };
+        }
+
         function refreshAll() {
             const userUID = localStorage.getItem('nexus_uid') || "0000-0000-00";
-            document.getElementById('uid-num').innerText = userUID;
-
             const isAdmin = (userUID === ADMIN_ID);
+            
+            let xp = parseInt(localStorage.getItem('nexus_xp')) || 0;
+            let lvl = parseInt(localStorage.getItem('nexus_lvl')) || 1;
+            let coins = parseInt(localStorage.getItem('nexus_coins')) || 500;
+            let diamonds = parseInt(localStorage.getItem('nexus_diamonds')) || 50;
             let inv = JSON.parse(localStorage.getItem('nexus_inventory')) || [];
+
+            // Mail Notification Logic
+            const mail = JSON.parse(localStorage.getItem('nexus_mail')) || [];
+            const unread = mail.filter(m => !m.read).length;
+            const notif = document.getElementById('mail-notif');
+            if(unread > 0) {
+                notif.style.display = "block";
+                notif.innerText = unread;
+            } else {
+                notif.style.display = "none";
+            }
+
+            const rank = getRankInfo(xp);
+            const rankBadge = document.getElementById('rank-name');
+            rankBadge.innerText = rank.name;
+            rankBadge.style.color = rank.color;
+            rankBadge.style.borderColor = rank.color;
+
+            document.getElementById('uid-num').innerText = userUID;
+            document.getElementById('display-name').innerText = localStorage.getItem('nexus_username') || (isAdmin ? "NEXUS_CREATOR" : "GUEST");
+            document.getElementById('user-avatar').src = localStorage.getItem('nexus_avatar') || `https://api.dicebear.com/7.x/bottts/svg?seed=${userUID}`;
             
             if (isAdmin) {
-                // UI for Admin
                 document.getElementById('admin-tag').style.display = "block";
                 document.getElementById('admin-god-btn').style.display = "block";
-                document.getElementById('config-card').classList.add('admin-glow');
-                document.getElementById('system-status').innerText = "SYSTEM OVERLORD ACCESS ACTIVE.";
-                
+                document.getElementById('admin-gift-btn').style.display = "block";
                 document.getElementById('coin-count').innerText = "∞";
                 document.getElementById('diamond-count').innerText = "∞";
                 document.getElementById('lvl-display').innerText = "53";
                 document.getElementById('xp-bar').style.width = "100%";
             } else {
-                // UI for Regular Players
-                document.getElementById('admin-tag').style.display = "none";
-                document.getElementById('admin-god-btn').style.display = "none";
-                document.getElementById('config-card').classList.remove('admin-glow');
-                document.getElementById('system-status').innerText = "System online...";
-
-                // Security Check: If a guest has infinite or crazy money, reset it
-                let currentCoins = parseInt(localStorage.getItem('nexus_coins'));
-                if (isNaN(currentCoins) || currentCoins > 1000000) {
-                    localStorage.setItem('nexus_coins', 500);
-                    currentCoins = 500;
-                }
-                
-                let currentDiamonds = parseInt(localStorage.getItem('nexus_diamonds'));
-                if (isNaN(currentDiamonds) || currentDiamonds > 1000000) {
-                    localStorage.setItem('nexus_diamonds', 50);
-                    currentDiamonds = 50;
-                }
-
-                document.getElementById('coin-count').innerText = currentCoins.toLocaleString();
-                document.getElementById('diamond-count').innerText = currentDiamonds.toLocaleString();
-                document.getElementById('lvl-display').innerText = localStorage.getItem('nexus_lvl') || 1;
-                
-                let xp = parseInt(localStorage.getItem('nexus_xp')) || 0;
-                document.getElementById('xp-bar').style.width = ((xp / 150) * 100) + "%";
+                document.getElementById('coin-count').innerText = coins.toLocaleString();
+                document.getElementById('diamond-count').innerText = diamonds.toLocaleString();
+                document.getElementById('lvl-display').innerText = lvl;
+                document.getElementById('xp-bar').style.width = (xp / 3000 * 100) + "%";
+                document.getElementById('xp-text').innerText = `${xp} / 3000 XP`;
             }
 
-            document.getElementById('user-avatar').src = localStorage.getItem('nexus_avatar') || `https://api.dicebear.com/7.x/bottts/svg?seed=${userUID}`;
-            document.getElementById('display-name').innerText = localStorage.getItem('nexus_username') || (isAdmin ? "NEXUS_CREATOR" : "GUEST");
-
-            // Badge System
             const slot = document.getElementById('status-slot');
-            const equipped = inv.find(i => i.type === 'badge' && i.equipped === true);
+            const equippedBadge = inv.find(i => i.type === 'badge' && i.equipped === true);
             
-            if (equipped) {
-                slot.style.display = "flex"; 
-                slot.style.background = equipped.color;
-                slot.innerHTML = `<i class="fas ${equipped.icon}" style="color:#000; font-size:0.7rem;"></i>`;
-            } else if (isAdmin) {
-                slot.style.display = "flex"; 
-                slot.style.background = "var(--primary)";
-                slot.innerHTML = `<i class="fas fa-shield-halved" style="color:#000; font-size:0.7rem;"></i>`;
+            slot.style.display = "flex";
+            if (equippedBadge) {
+                slot.style.background = equippedBadge.color;
+                slot.innerHTML = `<i class="fas ${equippedBadge.icon}" style="color:#000; font-size:0.7rem;"></i>`;
             } else {
-                slot.style.display = "none";
+                slot.style.background = rank.color;
+                slot.innerHTML = `<i class="fas ${rank.icon}" style="color:#000; font-size:0.7rem;"></i>`;
             }
+        }
 
-            const row = document.getElementById('badge-row'); 
-            row.innerHTML = '';
-            inv.filter(i => i.type === 'badge').forEach(b => {
-                row.innerHTML += `<i class="fas ${b.icon}" style="color:${b.color}; font-size:0.85rem;"></i>`;
-            });
+        // Admin functionality to send "Gifts" or Messages to Mail.html
+        function openGiftPanel() {
+            if(localStorage.getItem('nexus_uid') !== ADMIN_ID) return;
+            
+            const msg = prompt("Enter the message/gift details to send to all users:");
+            if(msg) {
+                const currentMail = JSON.parse(localStorage.getItem('nexus_mail')) || [];
+                const newMail = {
+                    id: Date.now(),
+                    sender: "SYSTEM OVERLORD",
+                    subject: "Nexus Gift / Announcement",
+                    body: msg,
+                    time: new Date().toLocaleString(),
+                    read: false
+                };
+                currentMail.unshift(newMail);
+                localStorage.setItem('nexus_mail', JSON.stringify(currentMail));
+                alert("Message broadcasted to Neural Mail!");
+                refreshAll();
+            }
         }
 
         function triggerGodMode() {
@@ -278,7 +279,7 @@
                 localStorage.setItem('nexus_coins', 999999999);
                 localStorage.setItem('nexus_diamonds', 999999999);
                 localStorage.setItem('nexus_lvl', 53);
-                localStorage.setItem('nexus_xp', 150);
+                localStorage.setItem('nexus_xp', 3000);
                 refreshAll();
             }
         }
