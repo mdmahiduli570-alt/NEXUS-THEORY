@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexus | Neural Mail</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #00f2ff;
+            --bg: #0a0b10;
+            --card-bg: rgba(255, 255, 255, 0.05);
+            --border: rgba(255, 255, 255, 0.1);
+            --gold: #ffcc00;
+            --diamond: #00d4ff;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        body { background: var(--bg); color: white; background: radial-gradient(circle at top right, #1a1b2e, #0a0b10); min-height: 100vh; padding: 30px 20px; }
+        .container { max-width: 600px; margin: 0 auto; }
+        .header { display: flex; align-items: center; gap: 20px; margin-bottom: 30px; }
+        .back-btn { color: var(--primary); text-decoration: none; font-size: 1.5rem; }
+        
+        .mail-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            animation: slideIn 0.4s ease-out;
+        }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .mail-header { display: flex; justify-content: space-between; font-size: 0.75rem; margin-bottom: 10px; }
+        .sender { color: var(--primary); font-weight: bold; text-transform: uppercase; }
+        .time { opacity: 0.4; }
+        .subject { font-size: 1.1rem; font-weight: bold; margin-bottom: 10px; }
+        .body-text { font-size: 0.9rem; opacity: 0.7; line-height: 1.5; margin-bottom: 20px; }
+
+        /* CLAIM BOX */
+        .claim-box {
+            background: rgba(0, 242, 255, 0.08);
+            border: 1px dashed var(--primary);
+            padding: 15px;
+            border-radius: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .reward-info { display: flex; align-items: center; gap: 10px; font-weight: bold; }
+        .claim-btn {
+            background: var(--primary);
+            color: #000;
+            border: none;
+            padding: 8px 18px;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .claim-btn:disabled { background: #333; color: #777; cursor: not-allowed; }
+        .empty { text-align: center; margin-top: 100px; opacity: 0.2; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <a href="index.html" class="back-btn"><i class="fas fa-arrow-left"></i></a>
+        <h1>NEURAL MAIL</h1>
+    </div>
+
+    <div id="mail-list"></div>
+</div>
+
+<script>
+    function renderMail() {
+        const myUID = localStorage.getItem('nexus_uid');
+        const globalMail = JSON.parse(localStorage.getItem('nexus_global_mail')) || [];
+        const list = document.getElementById('mail-list');
+        
+        const myMessages = globalMail.filter(m => m.targetUID === myUID);
+
+        if(myMessages.length === 0) {
+            list.innerHTML = `<div class="empty"><i class="fas fa-envelope-open-text fa-4x"></i><p>NO MESSAGES</p></div>`;
+            return;
+        }
+
+        list.innerHTML = '';
+        myMessages.forEach(msg => {
+            let claimHtml = '';
+            
+            // Checking if a reward exists
+            if (msg.rewardType && msg.rewardAmount > 0) {
+                const icon = msg.rewardType === 'coins' ? 'fa-coins' : 'fa-gem';
+                const color = msg.rewardType === 'coins' ? 'var(--gold)' : 'var(--diamond)';
+                
+                claimHtml = `
+                    <div class="claim-box">
+                        <div class="reward-info">
+                            <i class="fas ${icon}" style="color: ${color}"></i>
+                            <span>${msg.rewardAmount} ${msg.rewardType.toUpperCase()}</span>
+                        </div>
+                        <button class="claim-btn" id="btn-${msg.id}" onclick="processClaim(${msg.id}, '${msg.rewardType}', ${msg.rewardAmount})" ${msg.claimed ? 'disabled' : ''}>
+                            ${msg.claimed ? 'COLLECTED' : 'CLAIM'}
+                        </button>
+                    </div>
+                `;
+            }
+
+            const item = document.createElement('div');
+            item.className = 'mail-card';
+            item.innerHTML = `
+                <div class="mail-header">
+                    <span class="sender">${msg.sender}</span>
+                    <span class="time">${msg.time}</span>
+                </div>
+                <div class="subject">${msg.subject}</div>
+                <div class="body-text">${msg.body}</div>
+                ${claimHtml}
+            `;
+            list.appendChild(item);
+        });
+    }
+
+    function processClaim(id, type, amt) {
+        let globalMail = JSON.parse(localStorage.getItem('nexus_global_mail')) || [];
+        const idx = globalMail.findIndex(m => m.id === id);
+
+        if(idx !== -1 && !globalMail[idx].claimed) {
+            // Add balance
+            let balanceKey = type === 'coins' ? 'nexus_coins' : 'nexus_diamonds';
+            let current = parseInt(localStorage.getItem(balanceKey)) || 0;
+            localStorage.setItem(balanceKey, current + amt);
+
+            // Update status
+            globalMail[idx].claimed = true;
+            localStorage.setItem('nexus_global_mail', JSON.stringify(globalMail));
+
+            // Refresh UI
+            document.getElementById(`btn-${id}`).innerText = "COLLECTED";
+            document.getElementById(`btn-${id}`).disabled = true;
+            alert(`${amt} ${type} claimed!`);
+        }
+    }
+
+    window.onload = renderMail;
+</script>
+</body>
+</html>
