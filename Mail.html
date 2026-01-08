@@ -18,7 +18,8 @@
         body { background: var(--bg); color: white; background: radial-gradient(circle at top right, #1a1b2e, #0a0b10); min-height: 100vh; padding: 30px 20px; }
         .container { max-width: 600px; margin: 0 auto; }
         .header { display: flex; align-items: center; gap: 20px; margin-bottom: 30px; }
-        .back-btn { color: var(--primary); text-decoration: none; font-size: 1.5rem; }
+        .back-btn { color: var(--primary); text-decoration: none; font-size: 1.5rem; transition: 0.3s; }
+        .back-btn:hover { transform: translateX(-5px); text-shadow: 0 0 10px var(--primary); }
         
         .mail-card {
             background: var(--card-bg);
@@ -27,13 +28,14 @@
             padding: 20px;
             margin-bottom: 20px;
             animation: slideIn 0.4s ease-out;
+            position: relative;
         }
         @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         
         .mail-header { display: flex; justify-content: space-between; font-size: 0.75rem; margin-bottom: 10px; }
-        .sender { color: var(--primary); font-weight: bold; text-transform: uppercase; }
+        .sender { color: var(--primary); font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
         .time { opacity: 0.4; }
-        .subject { font-size: 1.1rem; font-weight: bold; margin-bottom: 10px; }
+        .subject { font-size: 1.1rem; font-weight: bold; margin-bottom: 10px; color: #fff; }
         .body-text { font-size: 0.9rem; opacity: 0.7; line-height: 1.5; margin-bottom: 20px; }
 
         /* CLAIM BOX */
@@ -57,7 +59,9 @@
             cursor: pointer;
             transition: 0.3s;
         }
+        .claim-btn:hover:not(:disabled) { transform: scale(1.05); box-shadow: 0 0 15px var(--primary); }
         .claim-btn:disabled { background: #333; color: #777; cursor: not-allowed; }
+        
         .empty { text-align: center; margin-top: 100px; opacity: 0.2; }
     </style>
 </head>
@@ -75,13 +79,15 @@
 <script>
     function renderMail() {
         const myUID = localStorage.getItem('nexus_uid');
+        // index.html এ পাঠানো ডাটা পাওয়ার জন্য কী (Key) চেক করা হচ্ছে
         const globalMail = JSON.parse(localStorage.getItem('nexus_global_mail')) || [];
         const list = document.getElementById('mail-list');
         
+        // শুধুমাত্র নিজের UID এর মেসেজ ফিল্টার করা
         const myMessages = globalMail.filter(m => m.targetUID === myUID);
 
         if(myMessages.length === 0) {
-            list.innerHTML = `<div class="empty"><i class="fas fa-envelope-open-text fa-4x"></i><p>NO MESSAGES</p></div>`;
+            list.innerHTML = `<div class="empty"><i class="fas fa-envelope-open-text fa-4x"></i><p style="margin-top:15px; font-weight:bold;">ENCRYPTED BOX EMPTY</p></div>`;
             return;
         }
 
@@ -89,7 +95,7 @@
         myMessages.forEach(msg => {
             let claimHtml = '';
             
-            // Checking if a reward exists
+            // Reward logic (Coins বা Diamonds চেক করা)
             if (msg.rewardType && msg.rewardAmount > 0) {
                 const icon = msg.rewardType === 'coins' ? 'fa-coins' : 'fa-gem';
                 const color = msg.rewardType === 'coins' ? 'var(--gold)' : 'var(--diamond)';
@@ -98,7 +104,7 @@
                     <div class="claim-box">
                         <div class="reward-info">
                             <i class="fas ${icon}" style="color: ${color}"></i>
-                            <span>${msg.rewardAmount} ${msg.rewardType.toUpperCase()}</span>
+                            <span>${msg.rewardAmount.toLocaleString()} ${msg.rewardType.toUpperCase()}</span>
                         </div>
                         <button class="claim-btn" id="btn-${msg.id}" onclick="processClaim(${msg.id}, '${msg.rewardType}', ${msg.rewardAmount})" ${msg.claimed ? 'disabled' : ''}>
                             ${msg.claimed ? 'COLLECTED' : 'CLAIM'}
@@ -109,6 +115,7 @@
 
             const item = document.createElement('div');
             item.className = 'mail-card';
+            // মেসেজ ওপেন করলে সেটাকে read হিসেবে মার্ক করা হবে
             item.innerHTML = `
                 <div class="mail-header">
                     <span class="sender">${msg.sender}</span>
@@ -120,6 +127,9 @@
             `;
             list.appendChild(item);
         });
+
+        // যখনই মেল পেজ ওপেন হবে, সব মেসেজকে "Read" হিসেবে মার্ক করা হবে যাতে index-এর নোটিফিকেশন চলে যায়
+        markAllAsRead(myUID);
     }
 
     function processClaim(id, type, amt) {
@@ -127,19 +137,36 @@
         const idx = globalMail.findIndex(m => m.id === id);
 
         if(idx !== -1 && !globalMail[idx].claimed) {
-            // Add balance
+            // ব্যালেন্স আপডেট
             let balanceKey = type === 'coins' ? 'nexus_coins' : 'nexus_diamonds';
             let current = parseInt(localStorage.getItem(balanceKey)) || 0;
             localStorage.setItem(balanceKey, current + amt);
 
-            // Update status
+            // ক্ল্যাম স্ট্যাটাস আপডেট
             globalMail[idx].claimed = true;
             localStorage.setItem('nexus_global_mail', JSON.stringify(globalMail));
 
-            // Refresh UI
-            document.getElementById(`btn-${id}`).innerText = "COLLECTED";
-            document.getElementById(`btn-${id}`).disabled = true;
-            alert(`${amt} ${type} claimed!`);
+            // UI আপডেট
+            const btn = document.getElementById(`btn-${id}`);
+            if(btn) {
+                btn.innerText = "COLLECTED";
+                btn.disabled = true;
+            }
+            alert(`SUCCESS: ${amt} ${type.toUpperCase()} added to core balance.`);
+        }
+    }
+
+    function markAllAsRead(uid) {
+        let globalMail = JSON.parse(localStorage.getItem('nexus_global_mail')) || [];
+        let changed = false;
+        globalMail.forEach(m => {
+            if(m.targetUID === uid && !m.read) {
+                m.read = true;
+                changed = true;
+            }
+        });
+        if(changed) {
+            localStorage.setItem('nexus_global_mail', JSON.stringify(globalMail));
         }
     }
 
